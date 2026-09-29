@@ -185,10 +185,9 @@ javascript:(function(){
       '<div style="display:flex;gap:10px;align-items:center;"><button id="gn" style="flex:1;padding:10px;background:#007cba;color:white;border:none;border-radius:4px;cursor:pointer;font-weight:bold;">Generate</button><button id="cl" style="flex:1;padding:10px;background:#666;color:white;border:none;border-radius:4px;cursor:pointer;">Close</button></div>'+
       '<div id="rs" style="margin-top:15px;padding:10px;background:#f5f5f5;border-radius:4px;display:none;">'+
         '<div style="font-weight:bold;margin-bottom:6px;">Generated Password</div>'+
-        '<div><input id="pw" type="password" readonly style="width:100%;font-family:monospace;font-size:16px;padding:6px;border:1px solid #ccc;border-radius:4px;" /></div>'+
+        '<div><input id="pw" type="text" readonly style="width:100%;font-family:monospace;font-size:16px;padding:6px;border:1px solid #ccc;border-radius:4px;" /></div>'+
         '<div style="margin-top:10px;display:flex;gap:10px;align-items:center;justify-content:flex-start;">'+
           '<button id="cp" style="padding:6px 10px;background:#28a745;color:white;border:none;border-radius:4px;cursor:pointer;">Copy to Clipboard</button>'+
-          '<button id="sh" style="padding:6px 10px;background:#444;color:white;border:none;border-radius:4px;cursor:pointer;">Show password</button>'+
         '</div>'+
       '</div>';
     overlay.appendChild(panel); document.body.appendChild(overlay);
@@ -203,9 +202,10 @@ javascript:(function(){
       try {
         var pwd = generatePassword(master, domain, length, secret);
         var pwEl = document.getElementById('pw');
-        pwEl.value = pwd; pwEl.type='password';
-        document.getElementById('sh').textContent='Show password';
+        pwEl.value = pwd;
         document.getElementById('rs').style.display='block';
+        // Select the visible result: populates the PRIMARY selection on Linux.
+        pwEl.focus(); pwEl.select();
       } catch (err) {
         alert('Error generating password: '+err.message);
       }
@@ -213,15 +213,16 @@ javascript:(function(){
 
     document.getElementById('gn').addEventListener('click', generate);
     document.getElementById('cp').addEventListener('click', function(){
-      var p = document.getElementById('pw').value;
-      navigator.clipboard.writeText(p).catch(function(){
-        var ta=document.createElement('textarea'); ta.value=p; ta.style.position='fixed'; ta.style.left='-9999px'; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
-      });
-    });
-    document.getElementById('sh').addEventListener('click', function(){
       var pw = document.getElementById('pw');
-      if(pw.type==='password'){ pw.type='text'; this.textContent='Hide password'; }
-      else { pw.type='password'; this.textContent='Show password'; }
+      var p = pw.value;
+      // Select first: this is what puts the password into PRIMARY (middle-click
+      // paste) on Linux, and execCommand('copy') below needs a selection anyway.
+      pw.focus(); pw.select();
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(p).catch(function(){ document.execCommand('copy'); });
+      } else {
+        document.execCommand('copy');
+      }
     });
     document.getElementById('cl').addEventListener('click', function(){ overlay.remove(); });
     overlay.addEventListener('click', function(e){ if(e.target===overlay){ overlay.remove(); } });

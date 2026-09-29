@@ -8,8 +8,8 @@ This document provides an in-depth description of the `sgp2025.js` bookmarklet t
 - The bookmarklet opens an overlay UI that:
   - Accepts Master Password, Domain, optional Secret, and desired Length
   - Generates a deterministic password consistent with SuperGenPass rules
-  - Displays the result in a masked password input by default
-  - Offers Show/Hide toggle and Copy to Clipboard
+  - Displays the result in a plain-text read-only field and selects it (populates PRIMARY on Linux)
+  - Offers Copy to Clipboard (sets CLIPBOARD and PRIMARY)
 
 ## Algorithm (compatibility with SuperGenPass)
 The bookmarklet reproduces the SuperGenPass workflow:
@@ -54,13 +54,16 @@ The compact version uses abbreviated identifiers to reduce size. The extended ve
 - Inputs: Master Password, Domain (pre-filled from `window.location.hostname`), optional Secret, Length.
 - Actions: Generate, Close.
 - Result area:
-  - Password field masked by default (`type="password"`).
-  - Buttons on a new row: Copy to Clipboard (silent), Show/Hide.
+  - Password field is plain text (`type="text"`, read-only); it is focused and selected after generation.
+  - Button on a new row: Copy to Clipboard (silent).
   - Enter key in any input triggers Generate.
 
 ## Security Considerations
 - All logic runs client-side. Nothing is sent to servers.
-- Clipboard operations are explicit user actions (a button click).
+- The generated password is displayed in plain text.
+- The result field is focused and selected immediately after Generate. On Linux/X11 this populates the PRIMARY selection (middle-click paste) right away. Browsers do not export selections of `type="password"` fields to PRIMARY, which is why the field is plain text.
+- The Copy button selects the field, then writes to CLIPBOARD (`navigator.clipboard.writeText`, falling back to `execCommand('copy')`). In some browser/embedding combinations, writing to CLIPBOARD can release the window's PRIMARY ownership again; this was observed in one embedded test engine. Desktop Firefox and Chromium document CLIPBOARD and PRIMARY as independent selections, so this should not normally happen there, but has not been independently confirmed in this repo. If middle-click paste ever comes up empty right after using Copy, the password is still visible on screen and can be re-selected manually (double/triple-click) since the field is no longer masked.
+- CLIPBOARD writes are explicit user actions (a button click).
 - The UI element is removed when closed or when the dimmed backdrop is clicked.
 - No persistent storage is used by default.
 

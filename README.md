@@ -16,6 +16,6 @@ How to use
 3. Visit any site, click the bookmarklet, enter your Master Password and the Domain (pre-filled), optionally a Secret, choose length, then press Generate. Copy using the Copy button.
 
 Notes
-- Password is masked by default; use "Show password" to toggle visibility.
-- Copy button copies the real password silently (no alerts).
+- The generated password is shown in plain text and selected automatically. On Linux this populates PRIMARY (middle-click paste).
+- Copy button sets CLIPBOARD (Ctrl+V) and selects the field (PRIMARY), silently (no alerts).
 - Works in Firefox and Chromium-based browsers.
