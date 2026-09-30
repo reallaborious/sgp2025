@@ -158,9 +158,11 @@ javascript:(function(){
   }
 
   // generatePassword (short: gp)
-  function generatePassword(master, domain, length, secret, hashRounds){
+  // removeSubdomains: omitted or anything but false -> keep only the last two host labels
+  // (a.b.example.com -> example.com); false -> use the full hostname.
+  function generatePassword(master, domain, length, secret, removeSubdomains, hashRounds){
     length = length || 10; secret = secret || ''; hashRounds = hashRounds || 10;
-    var processedDomain = extractHostname(domain, true);
+    var processedDomain = extractHostname(domain, removeSubdomains !== false);
     var inputSeed = master + secret + ':' + processedDomain;
     var current = inputSeed;
     for(var i=0;i<hashRounds;i++){ current = hashMd5Base64(current); }
@@ -179,7 +181,8 @@ javascript:(function(){
     panel.innerHTML = ''+
       '<h3 style="margin-top:0;color:#333;">SuperGenPass (SGP 2025)</h3>'+
       '<div style="margin-bottom:12px;"><label style="display:block;margin-bottom:4px;font-weight:bold;">Master Password</label><input type="password" id="mp" style="width:100%;padding:8px;border:1px solid #ccc;border-radius:4px;box-sizing:border-box;"></div>'+
-      '<div style="margin-bottom:12px;"><label style="display:block;margin-bottom:4px;font-weight:bold;">Domain</label><input type="text" id="dm" value="'+window.location.hostname+'" style="width:100%;padding:8px;border:1px solid #ccc;border-radius:4px;box-sizing:border-box;"></div>'+
+      '<div style="margin-bottom:12px;"><label style="display:block;margin-bottom:4px;font-weight:bold;">Domain</label><input type="text" id="dm" value="'+window.location.hostname+'" style="width:100%;padding:8px;border:1px solid #ccc;border-radius:4px;box-sizing:border-box;">'+
+        '<label style="display:flex;align-items:center;gap:6px;margin-top:6px;font-size:13px;color:#555;cursor:pointer;"><input type="checkbox" id="sgp-trim" checked style="margin:0;">Trim subdomains (keep last 2 labels)</label></div>'+
       '<div style="margin-bottom:12px;"><label style="display:block;margin-bottom:4px;font-weight:bold;">Secret (optional)</label><input type="text" id="sc" style="width:100%;padding:8px;border:1px solid #ccc;border-radius:4px;box-sizing:border-box;"></div>'+
       '<div style="margin-bottom:16px;"><label style="display:block;margin-bottom:4px;font-weight:bold;">Length</label><input type="number" id="ln" value="10" min="4" max="24" style="width:100%;padding:8px;border:1px solid #ccc;border-radius:4px;box-sizing:border-box;"></div>'+
       '<div style="display:flex;gap:10px;align-items:center;"><button id="gn" style="flex:1;padding:10px;background:#007cba;color:white;border:none;border-radius:4px;cursor:pointer;font-weight:bold;">Generate</button><button id="cl" style="flex:1;padding:10px;background:#666;color:white;border:none;border-radius:4px;cursor:pointer;">Close</button></div>'+
@@ -197,10 +200,11 @@ javascript:(function(){
       var domain = document.getElementById('dm').value;
       var secret = document.getElementById('sc').value;
       var length = parseInt(document.getElementById('ln').value)||10;
+      var trim = document.getElementById('sgp-trim').checked;
       if(!master){ alert('Please enter a master password'); return; }
       if(!domain){ alert('Please enter a domain'); return; }
       try {
-        var pwd = generatePassword(master, domain, length, secret);
+        var pwd = generatePassword(master, domain, length, secret, trim);
         var pwEl = document.getElementById('pw');
         pwEl.value = pwd;
         document.getElementById('rs').style.display='block';
@@ -228,7 +232,7 @@ javascript:(function(){
     overlay.addEventListener('click', function(e){ if(e.target===overlay){ overlay.remove(); } });
 
     var onEnter=function(e){ if((e.key||'')==='Enter'||e.keyCode===13){ e.preventDefault(); generate(); }};
-    ['mp','dm','sc','ln'].forEach(function(id){ var el=document.getElementById(id); if(el){ el.addEventListener('keydown', onEnter); }});
+    ['mp','dm','sc','ln','sgp-trim'].forEach(function(id){ var el=document.getElementById(id); if(el){ el.addEventListener('keydown', onEnter); }});
     document.getElementById('mp').focus();
   }
 
